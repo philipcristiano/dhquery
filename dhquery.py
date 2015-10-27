@@ -72,8 +72,9 @@ def genmac():
 
 def receivePacket(serverip, serverport, timeout, req):
     """Sends and receives packet from DHCP server"""
-    client = SilentClient(client_listen_port=67, server_listen_port=serverport)
+    client = SilentClient(client_listen_port=68, server_listen_port=serverport)
     client.dhcp_socket.settimeout(timeout)
+    client.BindToAddress()
     if serverip == '0.0.0.0': req.SetOption('flags',[128, 0])
     req_type = req.GetOption('dhcp_message_type')[0]
     client.SendDhcpPacketTo(client.GetNextDhcpPacket(),serverip,req)
