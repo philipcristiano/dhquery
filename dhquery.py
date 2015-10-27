@@ -77,7 +77,7 @@ def receivePacket(serverip, serverport, timeout, req):
     client.BindToAddress()
     if serverip == '0.0.0.0': req.SetOption('flags',[128, 0])
     req_type = req.GetOption('dhcp_message_type')[0]
-    client.SendDhcpPacketTo(client.GetNextDhcpPacket(),serverip,req)
+    client.SendDhcpPacketTo(req, serverip, serverport)
     # Don't wait answer for RELEASE message
     if req_type == 7: return None
     res = client.GetNextDhcpPacket()
