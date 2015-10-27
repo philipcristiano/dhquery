@@ -94,7 +94,8 @@ def preparePacket(xid=None,giaddr='0.0.0.0',chaddr='00:00:00:00:00:00',ciaddr='0
     if not xid: xid = genxid()
     req.SetOption('xid',xid)
     req.SetOption('giaddr',ipv4(giaddr).list())
-    req.SetOption('chaddr',hwmac(chaddr).list() + [0] * 10)
+    chaddr = [int(i, 16) for i in str(chaddr).split(':')] + [0] *10
+    req.SetOption('chaddr', chaddr)
     req.SetOption('ciaddr',ipv4(ciaddr).list())
     if msgtype == 'request':
         mt = 3
