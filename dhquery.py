@@ -39,23 +39,23 @@ def nagiosExit(rc,message):
 	sys.exit(rc)
 
 class SilentClient(DhcpClient):
-	
+
 	def HandleDhcpAck(self,p):
 		return
-	
+
 	def HandleDhcpNack(self,p):
 		return
-	
+
 	def HandleDhcpOffer(self,p):
 		return
-	
+
 	def HandleDhcpUnknown(self,p):
 		return
 
 	def HandleDhcpDiscover(self,p):
 		return
 
-	
+
 def genxid():
 	decxid = r.randint(0,0xffffffff)
 	xid = []
@@ -76,7 +76,7 @@ def receivePacket(serverip, serverport, timeout, req):
 	client.dhcp_socket.settimeout(timeout)
 	if serverip == '0.0.0.0': req.SetOption('flags',[128, 0])
 	req_type = req.GetOption('dhcp_message_type')[0]
-	client.SendDhcpPacketTo(serverip,req)
+	client.SendDhcpPacketTo(client.GetNextDhcpPacket(),serverip,req)
 	# Don't wait answer for RELEASE message
 	if req_type == 7: return None
 	res = client.GetNextDhcpPacket()
@@ -122,14 +122,14 @@ def main():
 	parser.add_option("-v","--verbose", action="store_true", dest="verbose", help="Verbose operation")
 	parser.add_option("-q","--quiet", action="store_false", dest="verbose", help="Quiet operation")
 	parser.add_option("--nagios", action="store_true", dest="nagios", help="Nagios mode of operation")
-	
+
 	(opts, args) = parser.parse_args()
 
 	if not opts.chaddr:
 		chaddr = genmac()
 	else:
 		chaddr = opts.chaddr
-	
+
 	if opts.nagios: opts.verbose = False
 	verbose = opts.verbose
 
@@ -138,13 +138,13 @@ def main():
 	else:
 		request_dhcp_message_type = opts.msgtype
 
-	request_ciaddr = opts.ciaddr 
-	serverip = opts.server 
+	request_ciaddr = opts.ciaddr
+	serverip = opts.server
 	cycleno = 1
 	xid = genxid()
-	
+
 	while True:
-		
+
 		if opts.cycles > 1 and opts.verbose is not False and (not opts.docycle or request_dhcp_message_type == "discover"):
 			print "="*100
 			print "| Cycle %s"%cycleno
@@ -159,7 +159,7 @@ def main():
 			req.PrintOptions()
 			print "="*100
 			print "\n"
-		
+
 		try:
 			res = receivePacket(serverip=serverip, serverport=opts.port, timeout=opts.timeout, req=req)
 		except socket.timeout:
@@ -167,16 +167,16 @@ def main():
 			if opts.nagios: nagiosExit(2,"%s request has been timed out."%request_dhcp_message_type.upper())
 			if verbose != False: print "Timed out."
 			pass
-	
+
 		if res:
 			dhcp_message_type = res.GetOption('dhcp_message_type')[0]
 			server_identifier = ipv4(res.GetOption('server_identifier'))
 			chaddr = hwmac(res.GetOption('chaddr')[:6])
 			yiaddr = ipv4(res.GetOption('yiaddr'))
-			
+
 			if opts.nagios and dhcp_message_type not in (2, 5):
 				nagiosExit(2,"Got %s response for our %s request"%(dhcpTypes.get(dhcp_message_type,'UNKNOWN'),dhcpTypes.get(request_dhcp_message_type,'UNKNOWN')))
-	
+
 			if verbose != False:
 				print "Received %s packet from %s; [%s] was bound to %s"%(dhcpTypes.get(dhcp_message_type,'UNKNOWN'), server_identifier, chaddr, yiaddr )
 			if verbose == True:
@@ -192,13 +192,13 @@ def main():
 					request_ciaddr = yiaddr.str()
 					serverip = server_identifier.str()
 					continue
-				
+
 				if dhcp_message_type == 5:
 					request_dhcp_message_type = 'release'
 					request_ciaddr = yiaddr.str()
 					serverip = server_identifier.str()
 					continue
-		
+
 		cycleno += 1
 		if cycleno > opts.cycles:
 			if opts.nagios:
@@ -217,8 +217,8 @@ def main():
 
 		if opts.docycle:
 			request_dhcp_message_type = "discover"
-			request_ciaddr = opts.ciaddr 
-			serverip = opts.server 
+			request_ciaddr = opts.ciaddr
+			serverip = opts.server
 		xid = genxid()
 		if not opts.chaddr:
 			chaddr = genmac()
@@ -228,6 +228,4 @@ def main():
 
 if __name__ == '__main__':
 	main()
-
-
 
