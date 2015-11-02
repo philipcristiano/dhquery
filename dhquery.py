@@ -144,6 +144,7 @@ def main():
     serverip = opts.server
     cycleno = 1
     xid = genxid()
+    server_identifier = None
 
     while True:
 
@@ -153,6 +154,8 @@ def main():
             print "="*100
 
         req = preparePacket(xid=xid, giaddr=opts.giaddr, chaddr=chaddr, ciaddr=request_ciaddr, msgtype=request_dhcp_message_type, required_opts=opts.required_opts)
+        if server_identifier is not None:
+            req.SetOption('server_identifier', server_identifier.list())
         if verbose != False:
             print "Sending %s [%s] packet to %s"%(request_dhcp_message_type.upper(),chaddr, opts.server)
         if verbose == True:
